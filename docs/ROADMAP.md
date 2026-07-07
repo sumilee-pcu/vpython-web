@@ -3,6 +3,22 @@
 목표: GlowScript / VPython 7 공식 API를 브라우저(Pyodide + three.js)에서 완전 호환으로 구현.
 기준 문서: https://www.glowscript.org/docs/VPythonDocs/index.html
 
+> **작업자/AI 온보딩**: 먼저 [/CLAUDE.md](../CLAUDE.md)를 읽을 것. 이 로드맵의 체크박스가
+> 진행 상태의 단일 진실 원천이고, 각 단계의 상세 구현 스펙(시그니처·기본값·설계·수용 기준)은
+> `docs/specs/phaseN-*.md`에 있다. **스펙을 읽지 않고 구현을 시작하지 말 것.**
+
+| 단계 | 상세 스펙 |
+|---|---|
+| Phase 1 | [specs/phase1-rendering-core.md](specs/phase1-rendering-core.md) |
+| Phase 2 | [specs/phase2-objects.md](specs/phase2-objects.md) |
+| Phase 3 | [specs/phase3-vector-math.md](specs/phase3-vector-math.md) |
+| Phase 4 | [specs/phase4-scene.md](specs/phase4-scene.md) |
+| Phase 5 | [specs/phase5-events.md](specs/phase5-events.md) |
+| Phase 6 | [specs/phase6-graphs-widgets.md](specs/phase6-graphs-widgets.md) |
+| Phase 7 | [specs/phase7-python-ecosystem.md](specs/phase7-python-ecosystem.md) |
+| Phase 8 | [specs/phase8-platform.md](specs/phase8-platform.md) |
+| Phase 9 | [specs/phase9-quality.md](specs/phase9-quality.md) |
+
 범례: ✅ 완료 / 🔜 다음 작업 / 예상 공수는 1인 기준.
 
 ---
