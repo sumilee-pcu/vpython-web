@@ -35,18 +35,21 @@ python -m http.server 8000
 
 첫 로딩 시 Pyodide(약 10MB) 다운로드로 수십 초 걸릴 수 있다 (이후 브라우저 캐시).
 
-## 현재 지원하는 API (MVP)
+## 현재 지원하는 API (Phase 1 완료 시점)
 
-- `vector` (연산자, `mag`, `mag2`, `norm()`, `dot()`, `cross()`)
-- `box`, `sphere` (pos, size/radius, color, opacity, visible + velocity 등 자유 속성)
+- `vector` (연산자, `mag`, `mag2`, `norm()`, `dot()`, `cross()`, 성분 수정 시 화면 자동 반영)
+- `box`, `sphere` — pos, **axis/up (회전)**, size/radius, **length/height/width**,
+  color, opacity, visible + velocity 등 자유 속성
 - `color` 상수 (red, green, blue, yellow, orange, cyan, magenta, purple, white, black, gray())
-- `rate(n)`, `print()` (하단 출력창)
+- `rate(n)`, `print()` (하단 출력창), 에러 시 줄번호 표시 + 해당 줄 하이라이트
 - 마우스 드래그로 카메라 회전/줌 (OrbitControls)
 
 ### 알려진 제약
 
-- `ball.pos.x += 1`처럼 벡터의 **성분만 수정하면 화면에 반영되지 않음** — `ball.pos = ...`로 재대입해야 동기화됨 (단, `velocity`처럼 렌더링과 무관한 자유 속성은 상관없음)
-- `scene` 객체는 스텁 (속성 설정은 조용히 무시됨)
+- 사용자 정의 함수 안에서 `rate()` 호출 불가 (top-level 루프에서만) — 함수 async화 미지원
+- `rate()` 없는 무한루프는 탭을 멈춤 (Stop 버튼/Worker는 Phase 7)
+- `scene` 객체는 스텁 (속성 설정은 조용히 무시됨 — Phase 4에서 구현)
+- 백그라운드 탭에서는 브라우저 타이머 스로틀로 시뮬레이션이 느려짐 (웹 표준 동작)
 
 ## 로드맵
 

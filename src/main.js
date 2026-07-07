@@ -31,6 +31,7 @@ const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
   indentUnit: 4,
 });
 editor.setValue(DEFAULT_CODE);
+globalThis.vpwEditor = editor; // 자동 테스트용 훅
 
 function status(msg) {
   statusEl.textContent = msg;
@@ -41,7 +42,36 @@ function print(text) {
   outputEl.scrollTop = outputEl.scrollHeight;
 }
 
+// ---- 에러 표시: 사용자 코드 기준 줄번호 + 해당 줄 하이라이트 ----
+let errorLine = null;
+
+function clearError() {
+  if (errorLine !== null) {
+    editor.removeLineClass(errorLine, 'background', 'cm-error-line');
+    errorLine = null;
+  }
+}
+
+function showError(e) {
+  const msg = String(e.message || e);
+  console.error(msg); // 전체 트레이스백은 콘솔에
+  const frames = [...msg.matchAll(/File "<exec>", line (\d+)/g)];
+  const lines = msg.trimEnd().split('\n');
+  const last = lines[lines.length - 1];
+  if (frames.length) {
+    const n = parseInt(frames[frames.length - 1][1], 10);
+    print(`${n}행: ${last}`);
+    if (n - 1 < editor.lineCount()) {
+      errorLine = n - 1;
+      editor.addLineClass(errorLine, 'background', 'cm-error-line');
+    }
+  } else {
+    print(last);
+  }
+}
+
 let pyodide = null;
+let transformFn = null; // vpython.py의 _transform (tokenize 기반, 줄 수 보존)
 
 async function init() {
   status('Pyodide 로딩 중... (첫 로딩은 수십 초 걸릴 수 있음)');
@@ -51,34 +81,41 @@ async function init() {
 
   const src = await (await fetch('./src/vpython.py')).text();
   pyodide.runPython(src); // vpython API를 전역 네임스페이스에 등록
+  transformFn = pyodide.globals.get('_transform');
 
   status('준비 완료');
   runBtn.disabled = false;
 }
 
+// Run은 실행 중에도 항상 클릭 가능해야 한다 (무한 루프 프로그램의 재실행 수단).
+// runCounter로 "이 호출이 최신 실행인가"를 판별해 상태 표시 경합을 정리한다.
+let runCounter = 0;
+
 async function run() {
+  const myRun = ++runCounter;
   outputEl.textContent = '';
-  pyodide.runPython('_new_run()'); // 이전 실행 루프에 중단 신호
+  clearError();
+  pyodide.runPython('_new_run()'); // 이전 실행 루프에 중단 신호 + dirty 초기화
   renderer.reset();
 
-  // VPython의 블로킹 스타일 rate()를 브라우저에서 돌리기 위해 await로 변환
-  let code = editor.getValue();
-  code = code.replace(/\bawait\s+rate\(/g, 'rate(').replace(/\brate\(/g, 'await rate(');
+  const code = transformFn(editor.getValue());
 
-  runBtn.disabled = true;
   status('실행 중...');
   try {
     await pyodide.runPythonAsync(code);
-    status('실행 완료');
+    if (runCounter === myRun) {
+      pyodide.runPython('_flush()'); // 루프 없이 끝나는 프로그램의 잔여 변경분 반영
+      status('실행 완료');
+    }
   } catch (e) {
     if (String(e).includes('_Stopped')) {
-      status('이전 실행 중단됨');
-    } else {
-      print(String(e));
+      // 이전 세대 루프의 정상 종료 — 조용히 무시
+    } else if (runCounter === myRun) {
+      showError(e);
       status('오류 발생');
+    } else {
+      console.error(e); // 교체된 실행의 에러는 콘솔로만
     }
-  } finally {
-    runBtn.disabled = false;
   }
 }
 

@@ -65,6 +65,8 @@ export class Renderer {
     const material = new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.0 });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.userData.type = type;
+    mesh.userData.axis = [1, 0, 0];
+    mesh.userData.up = [0, 1, 0];
 
     const id = this.nextId++;
     this.objects.set(id, mesh);
@@ -79,8 +81,23 @@ export class Renderer {
     this._applyProps(mesh, JSON.parse(propsJson));
   }
 
+  // 브리지 프로토콜 v2: rate()마다 변경분을 일괄 수신 { "3": {pos:[..]}, "7": {...} }
+  applyUpdates(batchJson) {
+    const batch = JSON.parse(batchJson);
+    for (const id of Object.keys(batch)) {
+      const mesh = this.objects.get(Number(id));
+      if (!mesh) continue; // 이전 세대 잔여 업데이트는 무시
+      this._applyProps(mesh, batch[id]);
+    }
+  }
+
   _applyProps(mesh, props) {
     if (props.pos) mesh.position.set(props.pos[0], props.pos[1], props.pos[2]);
+    if (props.axis || props.up) {
+      if (props.axis) mesh.userData.axis = props.axis;
+      if (props.up) mesh.userData.up = props.up;
+      this._applyOrientation(mesh);
+    }
     if (props.color) mesh.material.color.setRGB(props.color[0], props.color[1], props.color[2]);
     if (props.size) mesh.scale.set(props.size[0], props.size[1], props.size[2]);
     if (props.radius !== undefined) mesh.scale.setScalar(props.radius);
@@ -89,6 +106,25 @@ export class Renderer {
       mesh.material.opacity = props.opacity;
     }
     if (props.visible !== undefined) mesh.visible = props.visible;
+  }
+
+  // VPython 의미론: 객체의 로컬 X축이 axis 방향, up은 로컬 Y축 힌트.
+  // 기저(x̂, ŷ, ẑ)를 만들어 쿼터니언으로 적용한다. (ARCHITECTURE.md 참고)
+  _applyOrientation(mesh) {
+    const x = new THREE.Vector3(...mesh.userData.axis);
+    if (x.lengthSq() < 1e-24) x.set(1, 0, 0);
+    x.normalize();
+    let up = new THREE.Vector3(...mesh.userData.up);
+    if (up.lengthSq() < 1e-24) up.set(0, 1, 0);
+    let z = new THREE.Vector3().crossVectors(x, up);
+    if (z.lengthSq() < 1e-12) {
+      // axis ∥ up 폴백: axis가 수직에 가까우면 (0,0,1)을 up으로
+      up = Math.abs(x.y) < 0.99 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(0, 0, 1);
+      z = new THREE.Vector3().crossVectors(x, up);
+    }
+    z.normalize();
+    const y = new THREE.Vector3().crossVectors(z, x);
+    mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
   }
 
   // 새 실행 전에 이전 실행의 오브젝트를 모두 제거
