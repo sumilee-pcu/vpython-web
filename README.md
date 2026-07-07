@@ -50,10 +50,4 @@ python -m http.server 8000
 
 ## 로드맵
 
-- [ ] `cylinder`, `arrow`, `ring`, `helix`, `curve`, `label`
-- [ ] 그래프 (`graph`, `gcurve`)
-- [ ] 마우스/키보드 이벤트
-- [ ] `scene` 구현 (title, camera, background 등)
-- [ ] numpy 지원 (Pyodide 패키지 로드)
-- [ ] 클라우드 저장 (Supabase: 로그인, 내 프로그램, 공유 링크)
-- [ ] GitHub Pages 배포
+전체 구현 계획(9단계, VPython 전체 API 커버리지)은 [docs/ROADMAP.md](docs/ROADMAP.md) 참고.
