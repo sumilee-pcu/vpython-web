@@ -206,11 +206,12 @@ class _Object3D:
     # 예외 경로를 타지 않도록 — b.pos 읽기는 물리 루프에서 가장 빈번한 연산).
     _known = frozenset(("pos", "axis", "up", "color", "opacity", "size", "radius", "visible"))
 
-    def __init__(self, _type, defaults, kw, coupled=False):
+    def __init__(self, _type, defaults, kw, coupled=False, axis_length=False):
         # coupled=True(box 계열): size.x == mag(axis) 를 항상 유지
         _set = object.__setattr__
         _set(self, "_coupling", False)
         _set(self, "_coupled", coupled)
+        _set(self, "_axis_length", axis_length)
         props = {k: (vector(v) if isinstance(v, vector) else v)
                  for k, v in defaults.items()}  # 기본값 공유 방지 복사
 
@@ -220,11 +221,25 @@ class _Object3D:
                 if alias in kw:
                     object.__setattr__(props["size"], comp, float(kw.pop(alias)))
                     alias_given = True
+        length_given = False
+        if axis_length and "length" in kw:
+            length = float(kw.pop("length"))
+            axis = props["axis"].norm()
+            if axis.mag == 0:
+                axis = vector(1, 0, 0)
+            props["axis"] = axis * length
+            length_given = True
         axis_given = "axis" in kw
         size_given = "size" in kw or alias_given
         for k in list(kw):
             if k in self._known:
                 props[k] = kw.pop(k)
+
+        if axis_length and length_given:
+            axis = props["axis"].norm()
+            if axis.mag == 0:
+                axis = vector(1, 0, 0)
+            props["axis"] = axis * length
 
         if coupled:
             axis, size = props["axis"], props["size"]
@@ -260,6 +275,8 @@ class _Object3D:
             try:
                 size = object.__getattribute__(self, "size")
             except AttributeError:
+                if name == "length" and object.__getattribute__(self, "_axis_length"):
+                    return object.__getattribute__(self, "axis").mag
                 raise AttributeError(name) from None
             return getattr(size, _SIZE_ALIASES[name])
         raise AttributeError(name)
@@ -273,6 +290,12 @@ class _Object3D:
         elif name in _SIZE_ALIASES and hasattr(self, "size"):
             # b.length = 4 → size.x 성분 대입 (성분 셋이 dirty + axis 결합까지 처리)
             setattr(self.size, _SIZE_ALIASES[name], float(value))
+        elif name == "length" and object.__getattribute__(self, "_axis_length"):
+            # cylinder류는 length가 axis의 크기 별칭이다.
+            axis = self.axis.norm()
+            if axis.mag == 0:
+                axis = vector(1, 0, 0)
+            self.axis = axis * float(value)
         else:
             object.__setattr__(self, name, value)
 
@@ -313,6 +336,13 @@ def sphere(**kw):
                 "radius": 1.0, "color": color.white,
                 "opacity": 1.0, "visible": True}
     return _Object3D("sphere", defaults, kw)
+
+
+def cylinder(**kw):
+    defaults = {"pos": vector(0, 0, 0), "axis": vector(1, 0, 0), "up": vector(0, 1, 0),
+                "radius": 1.0, "color": color.white,
+                "opacity": 1.0, "visible": True}
+    return _Object3D("cylinder", defaults, kw, axis_length=True)
 
 
 # ---------------------------------------------------------------- scene (스텁)

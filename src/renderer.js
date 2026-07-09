@@ -51,7 +51,7 @@ export class Renderer {
     this.renderer.setSize(w, h);
   }
 
-  // type: 'box' | 'sphere', propsJson: JSON 문자열 (Python에서 직렬화해서 전달)
+  // type: 'box' | 'sphere' | 'cylinder', propsJson: JSON 문자열 (Python에서 직렬화해서 전달)
   createObject(type, propsJson) {
     const props = JSON.parse(propsJson);
     let geometry;
@@ -59,6 +59,12 @@ export class Renderer {
       geometry = new THREE.BoxGeometry(1, 1, 1);
     } else if (type === 'sphere') {
       geometry = new THREE.SphereGeometry(1, 48, 32);
+    } else if (type === 'cylinder') {
+      geometry = new THREE.CylinderGeometry(1, 1, 1, 48);
+      // three.js 원기둥은 로컬 Y축 중심 기준이다. VPython cylinder는
+      // pos에서 시작해 로컬 +X 방향으로 axis 길이만큼 뻗어야 한다.
+      geometry.rotateZ(-Math.PI / 2);
+      geometry.translate(0.5, 0, 0);
     } else {
       throw new Error(`unknown object type: ${type}`);
     }
@@ -67,6 +73,7 @@ export class Renderer {
     mesh.userData.type = type;
     mesh.userData.axis = [1, 0, 0];
     mesh.userData.up = [0, 1, 0];
+    mesh.userData.radius = 1;
 
     const id = this.nextId++;
     this.objects.set(id, mesh);
@@ -100,7 +107,16 @@ export class Renderer {
     }
     if (props.color) mesh.material.color.setRGB(props.color[0], props.color[1], props.color[2]);
     if (props.size) mesh.scale.set(props.size[0], props.size[1], props.size[2]);
-    if (props.radius !== undefined) mesh.scale.setScalar(props.radius);
+    if (props.radius !== undefined) {
+      if (mesh.userData.type === 'cylinder') {
+        mesh.userData.radius = props.radius;
+      } else {
+        mesh.scale.setScalar(props.radius);
+      }
+    }
+    if (mesh.userData.type === 'cylinder' && (props.axis || props.radius !== undefined)) {
+      this._applyCylinderScale(mesh);
+    }
     if (props.opacity !== undefined) {
       mesh.material.transparent = props.opacity < 1;
       mesh.material.opacity = props.opacity;
@@ -125,6 +141,13 @@ export class Renderer {
     z.normalize();
     const y = new THREE.Vector3().crossVectors(z, x);
     mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  }
+
+  _applyCylinderScale(mesh) {
+    const axis = new THREE.Vector3(...mesh.userData.axis);
+    const length = axis.length();
+    const radius = mesh.userData.radius;
+    mesh.scale.set(length, radius, radius);
   }
 
   // 새 실행 전에 이전 실행의 오브젝트를 모두 제거

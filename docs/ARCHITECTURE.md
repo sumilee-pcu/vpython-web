@@ -31,7 +31,7 @@ Python은 `from js import vpw`로 아래 세 함수만 사용한다. **인자는
 
 | 함수 | 방향 | 계약 |
 |---|---|---|
-| `vpw.createObject(type, propsJson) -> int` | Py→JS | type: `"box" \| "sphere"`. 반환된 정수 id를 Python 객체가 보관 |
+| `vpw.createObject(type, propsJson) -> int` | Py→JS | type: `"box" \| "sphere" \| "cylinder"`. 반환된 정수 id를 Python 객체가 보관 |
 | `vpw.applyUpdates(batchJson)` | Py→JS | **v2 배칭 (주 경로)**: `{"3": {"pos": [..]}, "7": {...}}` — rate()/_flush()마다 변경분 일괄 전송. **모르는 id는 조용히 무시** (이전 세대 잔여 호출 대비) |
 | `vpw.updateObject(id, propsJson)` | Py→JS | v1 단건 업데이트 (하위 호환용으로 유지, 현재 미사용) |
 | `vpw.reset()` | JS 내부 | 새 Run 직전에 main.js가 호출. 모든 mesh 제거 + dispose |

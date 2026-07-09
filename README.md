@@ -35,11 +35,12 @@ python -m http.server 8000
 
 첫 로딩 시 Pyodide(약 10MB) 다운로드로 수십 초 걸릴 수 있다 (이후 브라우저 캐시).
 
-## 현재 지원하는 API (Phase 1 완료 시점)
+## 현재 지원하는 API
 
 - `vector` (연산자, `mag`, `mag2`, `norm()`, `dot()`, `cross()`, 성분 수정 시 화면 자동 반영)
 - `box`, `sphere` — pos, **axis/up (회전)**, size/radius, **length/height/width**,
   color, opacity, visible + velocity 등 자유 속성
+- `cylinder` — pos(시작점), axis, radius, length 별칭, color, opacity, visible
 - `color` 상수 (red, green, blue, yellow, orange, cyan, magenta, purple, white, black, gray())
 - `rate(n)`, `print()` (하단 출력창), 에러 시 줄번호 표시 + 해당 줄 하이라이트
 - 마우스 드래그로 카메라 회전/줌 (OrbitControls)

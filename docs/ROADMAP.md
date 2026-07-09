@@ -52,7 +52,7 @@
 
 기하학적 프리미티브 (Phase 1의 axis 기반 위에서):
 
-- [ ] `cylinder` (pos, axis, radius)
+- [x] `cylinder` (pos, axis, radius)
 - [ ] `arrow` (pos, axis, shaftwidth, headwidth, headlength)
 - [ ] `cone`, `pyramid`
 - [ ] `ellipsoid` (length, height, width)
