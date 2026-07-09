@@ -4,6 +4,7 @@ import { EXAMPLES } from './examples.js';
 const statusEl = document.getElementById('status');
 const outputEl = document.getElementById('output');
 const runBtn = document.getElementById('run');
+const levelFilter = document.getElementById('level-filter');
 const exampleSelect = document.getElementById('example-select');
 const loadExampleBtn = document.getElementById('load-example');
 const previewCanvas = document.getElementById('example-preview-canvas');
@@ -61,15 +62,33 @@ function showError(e) {
 
 let pyodide = null;
 let transformFn = null; // vpython.py의 _transform (tokenize 기반, 줄 수 보존)
+const SCHOOL_LEVELS = ['전체 학령', '초등 고학년', '중학교', '고등학교', '대학 입문'];
 
 function initExamples() {
+  for (const level of SCHOOL_LEVELS) {
+    const option = document.createElement('option');
+    option.value = level;
+    option.textContent = level;
+    levelFilter.appendChild(option);
+  }
+  renderExampleOptions();
+}
+
+function renderExampleOptions() {
+  const selectedLevel = levelFilter.value || SCHOOL_LEVELS[0];
+  exampleSelect.textContent = '';
   for (const [i, example] of EXAMPLES.entries()) {
+    if (selectedLevel !== SCHOOL_LEVELS[0] && example.school !== selectedLevel) continue;
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = `${example.category} · ${example.title}`;
+    option.textContent = `${example.school} · ${example.category} · ${example.title}`;
     exampleSelect.appendChild(option);
   }
-  renderExamplePreview(0);
+  const firstValue = exampleSelect.options[0]?.value;
+  if (firstValue !== undefined) {
+    exampleSelect.value = firstValue;
+    renderExamplePreview(Number(firstValue));
+  }
 }
 
 async function loadExample(index = Number(exampleSelect.value || 0)) {
@@ -98,7 +117,7 @@ async function loadExample(index = Number(exampleSelect.value || 0)) {
 function renderExamplePreview(index = Number(exampleSelect.value || 0)) {
   const example = EXAMPLES[index];
   if (!example) return;
-  previewTitle.textContent = `${example.title} · ${example.category} · ${example.difficulty}`;
+  previewTitle.textContent = `${example.title} · ${example.school} · ${example.category} · ${example.difficulty}`;
   previewDescription.textContent = example.description;
 
   const ctx = previewCanvas.getContext('2d');
@@ -237,6 +256,7 @@ async function init() {
 
   status('준비 완료');
   runBtn.disabled = false;
+  levelFilter.disabled = false;
 }
 
 // Run은 실행 중에도 항상 클릭 가능해야 한다 (무한 루프 프로그램의 재실행 수단).
@@ -274,4 +294,5 @@ async function run() {
 runBtn.addEventListener('click', run);
 loadExampleBtn.addEventListener('click', () => loadExample());
 exampleSelect.addEventListener('change', () => renderExamplePreview());
+levelFilter.addEventListener('change', renderExampleOptions);
 init();

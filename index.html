@@ -38,12 +38,16 @@
     min-width: 180px; max-width: 260px; padding: 5px 8px;
     background: #151515; color: #eee; border: 1px solid #444; border-radius: 4px;
   }
+  #level-filter {
+    min-width: 120px; padding: 5px 8px;
+    background: #151515; color: #eee; border: 1px solid #444; border-radius: 4px;
+  }
   #load-example {
     padding: 6px 10px; font-size: 13px;
     background: #333; color: #eee; border: 1px solid #555; border-radius: 4px; cursor: pointer;
   }
   #load-example:hover:not(:disabled) { background: #3f3f3f; }
-  #load-example:disabled, #example-select:disabled { opacity: 0.55; cursor: wait; }
+  #load-example:disabled, #example-select:disabled, #level-filter:disabled { opacity: 0.55; cursor: wait; }
   #run {
     margin-left: auto; padding: 6px 20px; font-size: 14px; font-weight: 600;
     background: #2e7d32; color: #fff; border: none; border-radius: 4px; cursor: pointer;
@@ -79,6 +83,7 @@
   <header>
     <h1>vpython-web</h1>
     <span class="sub">Web VPython powered by real CPython (Pyodide + three.js)</span>
+    <select id="level-filter" title="권장 학령" disabled></select>
     <select id="example-select" title="예제 선택" disabled></select>
     <button id="load-example" title="선택한 예제 불러오기" disabled>Load</button>
     <span id="status">로딩 중...</span>
