@@ -43,6 +43,7 @@ python -m http.server 8000
 - `cylinder` — pos(시작점), axis, radius, length 별칭, color, opacity, visible
 - `color` 상수 (red, green, blue, yellow, orange, cyan, magenta, purple, white, black, gray())
 - `rate(n)`, `print()` (하단 출력창), 에러 시 줄번호 표시 + 해당 줄 하이라이트
+- 예제 라이브러리 드롭다운 (`examples/`의 정적 예제 로드)
 - 마우스 드래그로 카메라 회전/줌 (OrbitControls)
 
 ### 알려진 제약
