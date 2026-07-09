@@ -66,7 +66,7 @@ function initExamples() {
   for (const [i, example] of EXAMPLES.entries()) {
     const option = document.createElement('option');
     option.value = String(i);
-    option.textContent = example.title;
+    option.textContent = `${example.category} · ${example.title}`;
     exampleSelect.appendChild(option);
   }
   renderExamplePreview(0);
@@ -98,7 +98,7 @@ async function loadExample(index = Number(exampleSelect.value || 0)) {
 function renderExamplePreview(index = Number(exampleSelect.value || 0)) {
   const example = EXAMPLES[index];
   if (!example) return;
-  previewTitle.textContent = example.title;
+  previewTitle.textContent = `${example.title} · ${example.category} · ${example.difficulty}`;
   previewDescription.textContent = example.description;
 
   const ctx = previewCanvas.getContext('2d');
